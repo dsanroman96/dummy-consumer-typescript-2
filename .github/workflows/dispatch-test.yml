@@ -1,0 +1,11 @@
+name: Dispatch Test
+
+on:
+  repository_dispatch:
+    types: [dependency-released]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "dispatch ok"
