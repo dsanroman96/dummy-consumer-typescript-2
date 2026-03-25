@@ -1,0 +1,76 @@
+name: Update dependency version
+
+on:
+  repository_dispatch:
+    types: [dependency-released]
+
+permissions:
+  contents: write
+
+jobs:
+  update-dependency:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve incoming payload
+        id: incoming
+        run: |
+          set -euo pipefail
+
+          readarray -t PAYLOAD < <(python3 - <<'PY'
+import json
+import os
+
+with open(os.environ["GITHUB_EVENT_PATH"], encoding="utf-8") as fh:
+    event = json.load(fh)
+
+payload = event.get("client_payload", {})
+print(payload.get("dependency", ""))
+print(payload.get("version", ""))
+PY
+          )
+          DEPENDENCY="${PAYLOAD[0]}"
+          VERSION="${PAYLOAD[1]}"
+
+          if [ -z "${DEPENDENCY}" ] || [ -z "${VERSION}" ]; then
+            echo "Missing dependency or version input."
+            exit 1
+          fi
+
+          if [[ ! "${DEPENDENCY}" =~ ^[a-zA-Z0-9._-]+$ ]]; then
+            echo "Invalid dependency name: ${DEPENDENCY}"
+            exit 1
+          fi
+
+          if [[ ! "${VERSION}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid version format: ${VERSION}"
+            exit 1
+          fi
+
+          echo "dependency=${DEPENDENCY}" >> "${GITHUB_OUTPUT}"
+          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+
+      - name: Update package dependency
+        id: update
+        run: |
+          set -euo pipefail
+
+          DEPENDENCY="${{ steps.incoming.outputs.dependency }}"
+          NEXT_VERSION="${{ steps.incoming.outputs.version }}"
+          OWNER="dsanroman96"
+          TARGET_SPEC="github:${OWNER}/${DEPENDENCY}#${NEXT_VERSION}"
+
+          CHANGED="$(DEPENDENCY="${DEPENDENCY}" TARGET_SPEC="${TARGET_SPEC}" node -e "const fs=require('fs'); const path='package.json'; const dependency=process.env.DEPENDENCY; const targetSpec=process.env.TARGET_SPEC; const pkg=JSON.parse(fs.readFileSync(path,'utf8')); pkg.dependencies=pkg.dependencies||{}; const current=pkg.dependencies[dependency]||''; if(current===targetSpec){process.stdout.write('false'); process.exit(0);} pkg.dependencies[dependency]=targetSpec; fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\\n'); process.stdout.write('true');")"
+          echo "changed=${CHANGED}" >> "${GITHUB_OUTPUT}"
+
+      - name: Commit and push
+        if: steps.update.outputs.changed == 'true'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json
+          git commit -m "chore: update ${{ steps.incoming.outputs.dependency }} to ${{ steps.incoming.outputs.version }}"
+          git push
