@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "dependencies": {
-    "dummy-dep-generic": "github:dsanroman96/dummy-dep-generic#v0.6.2",
+    "dummy-dep-generic": "github:dsanroman96/dummy-dep-generic#v0.6.3",
     "dummy-dep-python": "github:dsanroman96/dummy-dep-python#v0.1.0",
     "dummy-dep-typescript": "github:dsanroman96/dummy-dep-typescript#v1.1.1"
   }
