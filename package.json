@@ -5,6 +5,6 @@
   "dependencies": {
     "dummy-dep-generic": "github:dsanroman96/dummy-dep-generic#v0.6.7",
     "dummy-dep-python": "github:dsanroman96/dummy-dep-python#v0.1.0",
-    "dummy-dep-typescript": "github:dsanroman96/dummy-dep-typescript#v1.1.12"
+    "dummy-dep-typescript": "github:dsanroman96/dummy-dep-typescript#v1.1.13"
   }
 }
