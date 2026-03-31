@@ -15,4 +15,3 @@ jobs:
       project_type: typescript
       upstream_name: ${{ github.event.client_payload.upstream }}
       version_tag: ${{ github.event.client_payload.version }}
-      open_pr: ${{ github.event.client_payload.open_pr || false }}
